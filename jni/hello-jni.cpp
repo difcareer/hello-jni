@@ -28,7 +28,7 @@
 
 #include "DexFile.h"
 
-
+#define RETURN_PTR(_val)        do { pResult->l = (Object*)(_val); return; } while(0)
 
 /*
  * Global verification mode.  These must be in order from least verification
@@ -390,4 +390,28 @@ Java_com_example_hellojni_HelloJni_stringFromJNI( JNIEnv* env,
     __android_log_print(ANDROID_LOG_ERROR, "JNIMsg", "numEntries:%d", hash_table->numEntries);
 
     return env->NewStringUTF("4 " ABI ".");
+}
+
+
+extern "C" ClassObject*
+Java_com_example_hellojni_HelloJni_getLoadedClass(JNIEnv* env, jobject thiz, jint index){
+   void* so = dlopen("/system/lib/libdvm.so", 0);
+   void* gDvm_addr = dlsym(so, "gDvm");
+   DvmGlobals *gDvm = (DvmGlobals*)gDvm_addr;
+   HashTable *hash_table = gDvm->loadedClasses;
+   int table_size = hash_table->tableSize;
+   HashEntry* pEntry;
+   pEntry = &hash_table->pEntries[index];
+   ClassObject* clazz =  (ClassObject*)pEntry->data;
+   return clazz;
+}
+
+extern "C" jint
+Java_com_example_hellojni_HelloJni_getTableSize(JNIEnv* env, jobject thiz){
+   void* so = dlopen("/system/lib/libdvm.so", 0);
+   void* gDvm_addr = dlsym(so, "gDvm");
+   DvmGlobals *gDvm = (DvmGlobals*)gDvm_addr;
+   HashTable *hash_table = gDvm->loadedClasses;
+   int table_size = hash_table->tableSize;
+   return table_size;
 }

@@ -16,32 +16,45 @@
 package com.example.hellojni;
 
 import android.app.Activity;
-import android.widget.TextView;
 import android.os.Bundle;
+import android.util.Log;
+
+import java.util.HashSet;
+import java.util.Set;
 
 
-public class HelloJni extends Activity
-{
-    /** Called when the activity is first created. */
+public class HelloJni extends Activity {
+
+    private Set<Class> loadedClasses = new HashSet<Class>();
+    private Set<ClassLoader> classLoaders = new HashSet<ClassLoader>();
+
+    /**
+     * Called when the activity is first created.
+     */
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        /* Create a TextView and set its content.
-         * the text is retrieved by calling a native
-         * function.
-         */
-        TextView  tv = new TextView(this);
-        tv.setText( stringFromJNI() );
-        setContentView(tv);
+        int tableSize = getTableSize();
+        for (int i = 0; i < tableSize; i++) {
+            Class clazz = getLoadedClass(i);
+            if(clazz!=null && clazz.getCanonicalName()!=null){
+                loadedClasses.add(clazz);
+                Log.e("loadedClass", clazz.getCanonicalName());
+                classLoaders.add(clazz.getClassLoader());
+            }
+        }
+        Log.e("loadedClass", "class size:"+loadedClasses.size()+"");
+        for(ClassLoader cl:classLoaders){
+            Log.e("loadedClass",cl.toString());
+        }
+        Log.e("loadedClass","classloader size:"+classLoaders.size()+"");
     }
 
     /* A native method that is implemented by the
      * 'hello-jni' native library, which is packaged
      * with this application.
      */
-    public native String  stringFromJNI();
+    public native String stringFromJNI();
 
     /* This is another native method declaration that is *not*
      * implemented by 'hello-jni'. This is simply to show that
@@ -53,7 +66,12 @@ public class HelloJni extends Activity
      * Trying to call this function will result in a
      * java.lang.UnsatisfiedLinkError exception !
      */
-    public native String  unimplementedStringFromJNI();
+    public native String unimplementedStringFromJNI();
+
+    public native Class getLoadedClass(int index);
+
+    public native int getTableSize();
+
 
     /* this is used to load the 'hello-jni' library on application
      * startup. The library has already been unpacked into
